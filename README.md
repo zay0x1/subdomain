@@ -41,8 +41,8 @@ Mutates discovered subdomains to find related hosts:
 ## Installation
 
 ```bash
-git clone https://github.com/youruser/subenum.git
-cd subenum
+git clone https://github.com/zay0x1/subdomain.git
+cd subdomain
 pip install -r requirements.txt
 ```
 
