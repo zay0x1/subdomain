@@ -71,38 +71,38 @@ pip install aiodns aiohttp tqdm
 ## Usage
 
 ```bash
-python subenum.py <domain> [options]
+python main.py <domain> [options]
 ```
 
 ### Quick Examples
 
 ```bash
 # Full scan with all phases
-python subenum.py example.com
+python main.py example.com
 
 # Export results to JSON and CSV
-python subenum.py example.com -oJ results.json -oC results.csv
+python main.py example.com -oJ results.json -oC results.csv
 
 # Include HTTP status code probing
-python subenum.py example.com --http-check
+python main.py example.com --http-check
 
 # Recursive enumeration (depth 3)
-python subenum.py example.com -r --recursive-depth 3
+python main.py example.com -r --recursive-depth 3
 
 # Passive only (no brute-force, no permutations)
-python subenum.py example.com --no-brute --no-permutation
+python main.py example.com --no-brute --no-permutation
 
 # Custom wordlist with higher concurrency
-python subenum.py example.com -w wordlist.txt -c 200
+python main.py example.com -w wordlist.txt -c 200
 
 # Use specific DNS resolvers
-python subenum.py example.com --resolvers 8.8.8.8,1.1.1.1
+python main.py example.com --resolvers 8.8.8.8,1.1.1.1
 
 # Quiet mode (table output only)
-python subenum.py example.com -q
+python main.py example.com -q
 
 # Verbose mode (debug logging)
-python subenum.py example.com -v
+python main.py example.com -v
 ```
 
 ---
