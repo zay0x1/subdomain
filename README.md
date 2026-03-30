@@ -1,333 +1,249 @@
-<div align="center">
+# SubEnum
 
-# 🔍 SubRecon
+**Comprehensive subdomain enumeration tool combining passive discovery, active brute-forcing, permutation generation, and live HTTP probing into a single async-powered CLI.**
 
-**Comprehensive Subdomain Enumeration Tool**
-
-[![Python](https://img.shields.io/badge/python-3.8%2B-blue?logo=python&logoColor=white)](https://python.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Code Style](https://img.shields.io/badge/code%20style-PEP8-black.svg)](https://peps.python.org/pep-0008/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Issues](https://img.shields.io/github/issues/yourusername/subrecon)](https://github.com/yourusername/subrecon/issues)
-
-*Combine passive intelligence, active brute-force, and smart permutations into a single, blazing-fast CLI tool. No API keys required.*
-
-[Installation](#-installation) •
-[Quick Start](#-quick-start) •
-[Features](#-features) •
-[Usage](#-usage) •
-[Architecture](#-architecture) •
-[Contributing](#-contributing)
+No API keys required — only publicly available data sources.
 
 ---
 
-</div>
+## Features
 
-## ✨ Features
+### Passive Discovery
+- **Certificate Transparency** — queries [crt.sh](https://crt.sh) for historically issued certificates
+- **DNS Record Mining** — parses MX, NS, SOA, TXT (SPF/DKIM/DMARC) records for referenced subdomains
 
-| Category | Capability | Details |
-|----------|-----------|---------|
-| 🕵️ **Passive** | Certificate Transparency | Query [crt.sh](https://crt.sh) for historically issued certificates |
-| 🕵️ **Passive** | DNS Record Mining | Extract subdomains from MX, NS, SOA, TXT (SPF), CNAME records |
-| ⚡ **Active** | Async DNS Brute-Force | Concurrent resolution via `asyncio` + `aiodns` (configurable up to 500+ tasks) |
-| ⚡ **Active** | Wildcard Detection | Automatic wildcard DNS detection prevents false-positive flooding |
-| ⚡ **Active** | Recursive Enumeration | Discovered subdomains become new base domains for deeper bruting |
-| 🧬 **Smart** | Permutation Engine | Prepend/append words, insert numbers, swap dashes on discovered subs |
-| 🌐 **Validation** | HTTP Live Check | Optional status code + redirect detection on all results |
-| 📊 **Output** | Multi-Format Export | Terminal table, JSON (structured), CSV — all deduplicated |
-| 🛡️ **Reliability** | Production-Grade | Retry logic, rate limiting, progress bars, verbose/quiet modes |
+### Active Discovery
+- **DNS Brute-Force** — async resolution via `aiodns` with a built-in wordlist of 1,450+ common subdomain prefixes
+- **Wildcard Detection** — fires random subdomain probes to identify and filter wildcard DNS responses before they flood results
+- **Recursive Enumeration** — every discovered subdomain becomes a new base domain for further bruting (configurable depth)
 
-## 📦 Installation
+### Permutation Engine
+Mutates discovered subdomains to find related hosts:
+- Prepend/append common words (`dev-`, `-staging`, `api.`, etc.)
+- Insert numbers (`host1`, `host-2`)
+- Swap dashes and dots (`web-app` ↔ `web.app`)
 
-### From Source (Recommended)
+### Output
+- Deduplicated results with IPs, CNAME chains, and source tags
+- Clean terminal table
+- Export to **JSON** and **CSV**
+- Optional HTTP status codes via `--http-check`
+
+### Reliability
+- Retry logic with exponential backoff on DNS timeouts
+- Token-bucket rate limiter (default 500 qps)
+- Configurable concurrency (default 100 async tasks)
+- Progress bars via `tqdm`
+- Verbose (`-v`) and quiet (`-q`) modes
+
+---
+
+## Installation
 
 ```bash
-git clone https://github.com/yourusername/subrecon.git
-cd subrecon
-pip install -e ".[dev]"
-```
-
-### Quick Install
-
-```bash
+git clone https://github.com/youruser/subenum.git
+cd subenum
 pip install -r requirements.txt
-python -m subrecon -d example.com
 ```
 
 ### Requirements
 
-- **Python 3.8+**
-- Dependencies: `aiodns`, `aiohttp`, `tqdm`
+Python 3.10+ and three packages:
 
-## 🚀 Quick Start
+```
+aiodns
+aiohttp
+tqdm
+```
+
+Or install directly:
 
 ```bash
-# Basic scan
-subrecon -d example.com
-
-# Full scan with HTTP checks + export
-subrecon -d example.com --live-check -o results -v
-
-# High-performance recursive scan
-subrecon -d example.com -c 200 --recursive --depth 3
+pip install aiodns aiohttp tqdm
 ```
-
-## 📖 Usage
-
-```
-usage: subrecon [-h] -d DOMAIN [-w WORDLIST] [--no-crtsh] [--no-permutations]
-                [--max-permutations N] [--recursive] [--depth N]
-                [--live-check] [-c N] [--rate-limit N] [--timeout N]
-                [--retries N] [--nameservers NS] [-o FILE] [--json-only]
-                [--csv-only] [--no-table] [-v] [-q] [--version]
-```
-
-### Core Options
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `-d, --domain` | Target domain **(required)** | — |
-| `-w, --wordlist` | Path to custom wordlist | Built-in (2,100+) |
-| `-o, --output` | Output base name (`.json` + `.csv`) | None |
-| `-v, --verbose` | Debug-level logging | Off |
-| `-q, --quiet` | Suppress all non-result output | Off |
-
-### Discovery Control
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--no-crtsh` | Skip Certificate Transparency lookup | Off |
-| `--no-permutations` | Skip permutation engine | Off |
-| `--max-permutations` | Cap permutation candidates | 5,000 |
-| `--recursive` | Recurse into discovered subdomains | Off |
-| `--depth` | Maximum recursion depth | 2 |
-| `--live-check` | HTTP status code checks | Off |
-
-### Performance Tuning
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `-c, --concurrency` | Max concurrent DNS tasks | 100 |
-| `--rate-limit` | Queries per second | 500 |
-| `--timeout` | DNS timeout (seconds) | 5.0 |
-| `--retries` | Retry count on timeout | 3 |
-| `--nameservers` | Custom DNS servers (comma-separated) | Google + Cloudflare |
-
-### Output Formats
-
-| Flag | Description |
-|------|-------------|
-| `--json-only` | Export JSON only (skip CSV) |
-| `--csv-only` | Export CSV only (skip JSON) |
-| `--no-table` | Suppress terminal table |
-
-## 💡 Examples
-
-<details>
-<summary><b>Basic enumeration</b></summary>
-
-```bash
-subrecon -d tesla.com
-```
-
-```
-  ____        _     ____
- / ___| _   _| |__ |  _ \ ___  ___ ___  _ __
- \___ \| | | | '_ \| |_) / _ \/ __/ _ \| '_ \
-  ___) | |_| | |_) |  _ <  __/ (_| (_) | | | |
- |____/ \__,_|_.__/|_| \_\___|\___\___/|_| |_|
-                                        v1.0.0
-
-[*] Target domain: tesla.com
-[*] Phase 1: Wildcard detection
-[*] No wildcard DNS detected
-[*] Phase 2: Passive discovery
-[*] crt.sh returned 142 unique subdomains
-...
---------------------------------------------------------------
-SUBDOMAIN              | IP ADDRESS(ES)    | SOURCE
---------------------------------------------------------------
-api.tesla.com          | 199.66.9.47       | crt.sh, brute-force
-mail.tesla.com         | 13.111.14.1       | dns-records
-shop.tesla.com         | 23.55.161.139     | brute-force
-...
---------------------------------------------------------------
-  Total: 287 unique subdomains
-```
-
-</details>
-
-<details>
-<summary><b>Full recon with export</b></summary>
-
-```bash
-subrecon -d example.com \
-  --live-check \
-  --recursive --depth 2 \
-  -c 200 \
-  -o example_scan \
-  -v
-```
-
-Produces:
-- `example_scan.json` — structured JSON with metadata
-- `example_scan.csv` — spreadsheet-ready CSV
-- Terminal table with HTTP status codes
-
-</details>
-
-<details>
-<summary><b>Custom wordlist + quiet mode</b></summary>
-
-```bash
-subrecon -d target.com -w wordlists/large.txt -q --json-only -o results
-```
-
-</details>
-
-## 🏗️ Architecture
-
-```
-subrecon/
-├── subrecon/
-│   ├── __init__.py          # Package metadata
-│   ├── __main__.py          # Entry point (python -m subrecon)
-│   ├── cli.py               # Argument parser
-│   ├── engine.py            # Main orchestrator
-│   ├── constants.py         # Wordlist, permutation words, banner
-│   ├── models.py            # Data classes
-│   ├── core/
-│   │   ├── __init__.py
-│   │   ├── resolver.py      # Async DNS resolver with retries
-│   │   ├── wildcard.py      # Wildcard detection
-│   │   ├── passive.py       # crt.sh + DNS record parsing
-│   │   ├── bruteforce.py    # DNS brute-force engine
-│   │   ├── permutations.py  # Permutation generator
-│   │   └── httpcheck.py     # HTTP live checker
-│   ├── output/
-│   │   ├── __init__.py
-│   │   ├── table.py         # Terminal table formatter
-│   │   ├── json_export.py   # JSON exporter
-│   │   └── csv_export.py    # CSV exporter
-│   └── utils/
-│       ├── __init__.py
-│       ├── ratelimit.py     # Token-bucket rate limiter
-│       └── logging.py       # Logging setup
-├── tests/
-│   ├── __init__.py
-│   ├── test_resolver.py
-│   ├── test_wildcard.py
-│   ├── test_passive.py
-│   ├── test_permutations.py
-│   └── test_output.py
-├── wordlists/
-│   └── common.txt           # Default wordlist (exported)
-├── .github/
-│   ├── workflows/
-│   │   └── ci.yml           # GitHub Actions CI
-│   └── ISSUE_TEMPLATE/
-│       ├── bug_report.md
-│       └── feature_request.md
-├── .gitignore
-├── LICENSE
-├── README.md
-├── CONTRIBUTING.md
-├── CHANGELOG.md
-├── Makefile
-├── setup.py
-├── setup.cfg
-├── pyproject.toml
-├── requirements.txt
-└── requirements-dev.txt
-```
-
-### Enumeration Pipeline
-
-```
-┌─────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Wildcard    │────▶│   Passive    │────▶│  Brute-Force │
-│  Detection   │     │  (crt.sh +   │     │  (Async DNS) │
-│              │     │   DNS parse) │     │              │
-└─────────────┘     └──────────────┘     └──────┬───────┘
-                                                │
-                    ┌──────────────┐     ┌───────▼───────┐
-                    │  HTTP Live   │◀────│  Permutation  │
-                    │  Check       │     │  Engine       │
-                    └──────┬───────┘     └───────────────┘
-                           │          ▲
-                           ▼          │ (if --recursive)
-                    ┌──────────────┐   │
-                    │   Output     │   │
-                    │ Table/JSON/  │───┘
-                    │    CSV       │
-                    └──────────────┘
-```
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-make test
-
-# With coverage
-make coverage
-
-# Lint
-make lint
-```
-
-## 📄 Output Formats
-
-### JSON Structure
-
-```json
-{
-  "meta": {
-    "tool": "SubRecon",
-    "version": "1.0.0",
-    "timestamp": "2026-03-30T14:00:00Z",
-    "domain": "example.com",
-    "total": 287
-  },
-  "subdomains": [
-    {
-      "subdomain": "api.example.com",
-      "ips": "93.184.216.34",
-      "cname_chain": "api.example.com.cdn.cloudflare.net",
-      "source": "crt.sh, brute-force",
-      "http_status": 200,
-      "http_redirect": null
-    }
-  ]
-}
-```
-
-### CSV Columns
-
-```
-subdomain, ips, cname_chain, source, http_status, http_redirect
-```
-
-## ⚠️ Legal Disclaimer
-
-This tool is intended for **authorized security testing and research only**. Always ensure you have explicit permission before enumerating subdomains of any domain you do not own. Unauthorized reconnaissance may violate applicable laws and terms of service.
-
-The authors assume no liability for misuse of this tool.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## 📝 License
-
-This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-<div align="center">
+## Usage
 
-**Built with ❤️ for the security community**
+```bash
+python subenum.py <domain> [options]
+```
 
-⭐ Star this repo if you find it useful!
+### Quick Examples
 
-</div>
+```bash
+# Full scan with all phases
+python subenum.py example.com
+
+# Export results to JSON and CSV
+python subenum.py example.com -oJ results.json -oC results.csv
+
+# Include HTTP status code probing
+python subenum.py example.com --http-check
+
+# Recursive enumeration (depth 3)
+python subenum.py example.com -r --recursive-depth 3
+
+# Passive only (no brute-force, no permutations)
+python subenum.py example.com --no-brute --no-permutation
+
+# Custom wordlist with higher concurrency
+python subenum.py example.com -w wordlist.txt -c 200
+
+# Use specific DNS resolvers
+python subenum.py example.com --resolvers 8.8.8.8,1.1.1.1
+
+# Quiet mode (table output only)
+python subenum.py example.com -q
+
+# Verbose mode (debug logging)
+python subenum.py example.com -v
+```
+
+---
+
+## Options Reference
+
+| Flag | Description | Default |
+|---|---|---|
+| `domain` | Target domain (positional) | *required* |
+| `--no-passive` | Skip crt.sh and DNS record mining | off |
+| `--no-brute` | Skip DNS brute-force | off |
+| `-w`, `--wordlist` | Custom wordlist file (one word per line) | built-in (1,450+) |
+| `-c`, `--concurrency` | Number of concurrent async tasks | `100` |
+| `--retries` | DNS query retry count | `3` |
+| `--timeout` | DNS query timeout (seconds) | `5.0` |
+| `--rate-limit` | Max DNS queries per second | `500` |
+| `--resolvers` | Comma-separated nameserver IPs | public DNS pool |
+| `-r`, `--recursive` | Recursively enumerate discovered subdomains | off |
+| `--recursive-depth` | Maximum recursion depth | `2` |
+| `--no-permutation` | Skip the permutation engine | off |
+| `--http-check` | Probe each host for HTTP/HTTPS status codes | off |
+| `-oJ`, `--output-json` | Export results to a JSON file | — |
+| `-oC`, `--output-csv` | Export results to a CSV file | — |
+| `-v`, `--verbose` | Enable debug logging to stderr | off |
+| `-q`, `--quiet` | Suppress everything except the results table | off |
+
+---
+
+## How It Works
+
+SubEnum runs six sequential phases:
+
+```
+Phase 1 — Passive Discovery
+  ├── Query crt.sh Certificate Transparency logs
+  └── Mine MX / NS / SOA / TXT records
+
+Phase 2 — Wildcard Detection
+  └── Probe 12 random subdomains; flag IPs that appear in ≥75%
+
+Phase 3 — Active Brute-Force
+  ├── Resolve wordlist against target domain
+  ├── Filter wildcard false positives
+  └── (Optional) Recurse into discovered subdomains
+
+Phase 4 — Permutation Engine
+  └── Mutate discovered names → resolve candidates
+
+Phase 5 — Passive Resolution
+  └── Resolve IPs / CNAMEs for passive-only entries
+
+Phase 6 — HTTP Live Check (optional)
+  └── GET request to each host over HTTPS then HTTP
+```
+
+All results are deduplicated by FQDN and tagged with their discovery source.
+
+---
+
+## Output Formats
+
+### Terminal Table
+
+```
+  ──────────────────────────────────────────────────────────────────────
+  Subdomain          IP(s)              CNAME              Source
+  ──────────────────────────────────────────────────────────────────────
+  api.example.com    93.184.216.34                         brute, crt.sh
+  dev.example.com    93.184.216.35      dev.cdn.example…   permutation
+  mail.example.com   93.184.216.36                         dns-records
+  ──────────────────────────────────────────────────────────────────────
+  Total: 3 unique subdomains
+```
+
+### JSON (`-oJ`)
+
+```json
+[
+  {
+    "subdomain": "api.example.com",
+    "ips": ["93.184.216.34"],
+    "cname_chain": [],
+    "sources": ["brute", "crt.sh"],
+    "http_status": 200,
+    "http_redirect": null
+  }
+]
+```
+
+### CSV (`-oC`)
+
+```
+subdomain,ips,cname_chain,sources,http_status,http_redirect
+api.example.com,93.184.216.34,,brute|crt.sh,200,
+```
+
+---
+
+## Built-in Wordlist
+
+The tool ships with a curated wordlist of **1,450+ common subdomain prefixes** covering:
+
+- Infrastructure (`ns`, `mx`, `dns`, `vpn`, `proxy`, `gateway`)
+- Development lifecycle (`dev`, `staging`, `uat`, `qa`, `prod`, `beta`)
+- Applications (`api`, `app`, `portal`, `dashboard`, `admin`, `cms`)
+- Services (`mail`, `ftp`, `ssh`, `db`, `cdn`, `cache`, `queue`)
+- Cloud & DevOps (`cloud`, `docker`, `k8s`, `jenkins`, `monitor`)
+- Short labels (`a`–`zz`) for comprehensive coverage
+
+Supply your own with `-w path/to/wordlist.txt` (one entry per line).
+
+---
+
+## Performance Tuning
+
+| Scenario | Recommended flags |
+|---|---|
+| Fast scan on reliable network | `-c 300 --rate-limit 1000` |
+| Stealth / low-bandwidth | `-c 20 --rate-limit 50 --timeout 10` |
+| Large custom wordlist | `-c 200 --rate-limit 800` |
+| Deep recursive dive | `-r --recursive-depth 4 -c 150` |
+| Passive recon only | `--no-brute --no-permutation` |
+
+The default settings (`-c 100`, `--rate-limit 500`) are a safe balance for most targets.
+
+---
+
+## Troubleshooting
+
+**"Missing required packages"** — Install dependencies: `pip install aiodns aiohttp tqdm`
+
+**Wildcard flooding results** — This is handled automatically. The tool probes 12 random subdomains before bruting; if ≥75% resolve to the same IP, those IPs are filtered. If you still see noise, the domain may have partial wildcards on specific subzones.
+
+**Timeouts on large wordlists** — Increase `--timeout` and decrease `--concurrency`. Some resolvers throttle high-volume clients.
+
+**Empty crt.sh results** — The target may not have publicly logged certificates, or crt.sh may be rate-limiting. Results from other phases will still populate.
+
+---
+
+## Disclaimer
+
+This tool is intended for **authorized security testing and reconnaissance only**. Always obtain written permission before enumerating subdomains of domains you do not own. Unauthorized scanning may violate laws and terms of service.
+
+---
+
+## License
+
+MIT
