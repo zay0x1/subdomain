@@ -4,6 +4,10 @@
 
 No API keys required — only publicly available data sources.
 
+<p align="center">
+  <img src="cover.png" alt="SubEnum Banner" width="800">
+</p>
+
 ---
 
 ## Features
